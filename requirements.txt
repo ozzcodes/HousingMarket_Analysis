@@ -4,4 +4,12 @@ requests~=2.25.1
 unicodecsv~=0.14.1
 lxml~=4.6.3
 beautifulsoup4~=4.9.3
-pyzillow
+pyzillow~=0.7.0
+numpy
+jmespath
+geopy
+folium
+sklearn
+seaborn
+wget
+xmltodict~=0.12.0
