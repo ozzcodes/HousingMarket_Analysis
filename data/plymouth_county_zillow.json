@@ -1,7 +1,4 @@
 {
-  "remaining_requests": 994,
-  "original_status": 200,
-  "pc_status": 200,
   "url": "https://www.zillow.com/homes/Plymouth-County,-MA_rb/",
   "body": {
     "alert": "A generic web scraper has been selected. Please contact support if you require a more detailed scraper for your given URL.",
