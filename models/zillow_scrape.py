@@ -3,6 +3,7 @@ import requests
 import unicodecsv as csv
 import argparse
 import json
+from urllib.request import Request, urlopen
 
 
 def clean(text):
@@ -23,16 +24,16 @@ def get_headers():
     return headers
 
 
-def create_url(zipcode, filter):
+def create_url(location, filter):
     # Creating Zillow URL based on the filter.
 
     if filter == "newest":
-        url = "https://www.zillow.com/homes/for_sale/{0}/0_singlestory/days_sort".format(zipcode)
+        url = "https://www.zillow.com/homes/for_sale/{0}/0_singlestory/days_sort".format(location)
     elif filter == "cheapest":
-        url = "https://www.zillow.com/homes/for_sale/{0}/0_singlestory/pricea_sort/".format(zipcode)
+        url = "https://www.zillow.com/homes/for_sale/{0}/0_singlestory/pricea_sort/".format(location)
     else:
         url = "https://www.zillow.com/homes/for_sale/{0}_rb/?fromHomePage=true&shouldFireSellPageImplicitClaimGA=false&fromHomePageTab=buy".format(
-            zipcode)
+            location)
     print(url)
     return url
 
@@ -47,7 +48,7 @@ def save_to_file(response):
 def write_data_to_csv(data):
     # saving scraped data to csv.
 
-    with open("../data/properties-%s.csv" % zipcode, 'wb') as csvfile:
+    with open("../data/properties-%s.csv" % location, 'wb') as csvfile:
         fieldnames = ['title', 'address', 'city', 'state', 'postal_code', 'price', 'facts and features',
                       'real estate provider', 'url']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -90,7 +91,7 @@ def get_data_from_json(raw_json_data):
             property_info = properties.get('hdpData', {}).get('homeInfo')
             city = property_info.get('city')
             state = property_info.get('state')
-            postal_code = property_info.get('zipcode')
+            postal_code = property_info.get('location')
             price = properties.get('price')
             bedrooms = properties.get('beds')
             bathrooms = properties.get('baths')
@@ -119,8 +120,8 @@ def get_data_from_json(raw_json_data):
         return None
 
 
-def parse(zipcode, filter=None):
-    url = create_url(zipcode, filter)
+def parse(location, filter=None):
+    url = create_url(location, filter)
     response = get_response(url)
 
     if not response:
@@ -128,7 +129,11 @@ def parse(zipcode, filter=None):
 
         return None
 
-    parser = html.fromstring(response.text)
+    req = Request(url, headers={'User_Agent': 'Mozilla/5.0'})
+    webpage = urlopen(req).read()
+
+    # parser = html.fromstring(response.text)
+    parser = html.fromstring(webpage)
     search_results = parser.xpath("//div[@id='search-results']//article")
 
     if not search_results:
@@ -182,7 +187,7 @@ if __name__ == "__main__":
     # Reading arguments
 
     argparser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    argparser.add_argument('zipcode', help='')
+    argparser.add_argument('location', help='')
     sortorder_help = """
     available sort orders are :
     newest : Latest property details,
@@ -191,10 +196,10 @@ if __name__ == "__main__":
 
     argparser.add_argument('sort', nargs='?', help=sortorder_help, default='Homes For You')
     args = argparser.parse_args()
-    zipcode = args.zipcode
+    location = args.location
     sort = args.sort
-    print("Fetching data for %s" % zipcode)
-    scraped_data = parse(zipcode, sort)
+    print("Fetching data for %s" % location)
+    scraped_data = parse(location, sort)
 
     if scraped_data:
         print("Writing data to output file")
